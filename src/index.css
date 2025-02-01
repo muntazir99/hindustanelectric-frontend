@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Reospec';
+    src: url('../src/components/assets/Reospec.otf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
