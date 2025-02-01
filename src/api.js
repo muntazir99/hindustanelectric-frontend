@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000", // Update this if the backend URL is different
+  baseURL: "https://hindustanelectric.onrender.com", // Update this if the backend URL is different
 });
 
 api.interceptors.request.use((config) => {
