@@ -7,6 +7,7 @@ import CalendarDashboard from "./components/Dashboard/CalenderDashboard.js";
 import Logs from "./components/Logs/LogsList.js";
 import Inventory from "./components/Inventory/InventoryList.js";
 import Login from "./components/Auth/LoginAuth.js";
+import CreateUser from "./components/Auth/CreateUser.js";
 
 function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -22,6 +23,7 @@ function App() {
         <Route path="/inventory" element={isAuthenticated ? <Inventory /> : <Navigate to="/login" />} />
         <Route path="/logs" element={isAuthenticated ? <Logs /> : <Navigate to="/login" />} />
         <Route path="/inventory/add" element={isAuthenticated ? <AddItem /> : <Navigate to="/login" />} />
+        <Route path="/create-user" element={isAuthenticated ? <CreateUser /> : <Navigate to="/login" />} />
         <Route path="/logs/allot" element={isAuthenticated ? <SellItem /> : <Navigate to="/login" />} />
         <Route path="/logs/return" element={isAuthenticated ? <ReturnItem /> : <Navigate to="/login" />} />
         <Route path="/calendar" element={isAuthenticated ? <CalendarDashboard /> : <Navigate to="/login" />} />
