@@ -601,42 +601,340 @@
 
 
 
-// updated
-import React, { useState, useEffect } from "react";
+// updated for dropdown with autofill and quantity check
+
+// import React, { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import axios from "../../api.js";
+// import jsPDF from "jspdf";
+// import "jspdf-autotable";
+
+// // Child component for a single sale entry using a dropdown of available items
+// function SaleEntry({ sale, index, handleSaleChange, allItems }) {
+//   const handleSelectChange = (e) => {
+//     const selectedName = e.target.value;
+//     const selectedItem = allItems.find((item) => item.name === selectedName);
+//     handleSaleChange(index, "itemName", selectedName);
+//     handleSaleChange(index, "company", selectedItem ? selectedItem.company : "");
+//     handleSaleChange(index, "availableQuantity", selectedItem ? selectedItem.quantity : null);
+//   };
+
+//   return (
+//     <div className="relative">
+//       <select
+//         value={sale.itemName}
+//         onChange={handleSelectChange}
+//         className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+//         style={{
+//           background: "#e0e0e0",
+//           border: "1px solid rgba(255,255,255,0.3)",
+//           boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+//         }}
+//       >
+//         <option value="">Select item</option>
+//         {allItems.map((item, idx) => (
+//           <option key={idx} value={item.name}>
+//             {item.name}
+//           </option>
+//         ))}
+//       </select>
+//     </div>
+//   );
+// }
+
+// function SellMultipleItems() {
+//   const initialSale = {
+//     itemName: "",
+//     company: "",
+//     quantity: "",
+//     price: "",
+//     availableQuantity: null
+//   };
+
+//   const [sales, setSales] = useState([initialSale]);
+//   const [buyer, setBuyer] = useState("");
+//   const [cart, setCart] = useState([]);
+//   const [message, setMessage] = useState("");
+//   const [error, setError] = useState("");
+//   const [allItems, setAllItems] = useState([]);
+//   const navigate = useNavigate();
+
+//   // Fetch the list of available items (with full details) for the dropdown.
+//   // Ensure this endpoint returns an object with a "data" array.
+//   useEffect(() => {
+//     const fetchItems = async () => {
+//       try {
+//         const res = await axios.get("/inventory/");
+//         const items = res.data.data || [];
+//         setAllItems(items);
+//       } catch (err) {
+//         console.error("Error fetching inventory details:", err);
+//       }
+//     };
+//     fetchItems();
+//   }, []);
+
+
+//   const handleSaleChange = (index, field, value) => {
+//     const newSales = [...sales];
+//     newSales[index][field] = value;
+//     // If itemName is changed manually (e.g. reselecting), clear company and availableQuantity
+//     if (field === "itemName") {
+//       newSales[index]["company"] = "";
+//       newSales[index]["availableQuantity"] = null;
+//     }
+//     setSales(newSales);
+//   };
+
+//   const handleAddSale = () => {
+//     setSales([...sales, initialSale]);
+//   };
+
+//   const handleRemoveSale = (index) => {
+//     if (sales.length > 1) {
+//       setSales(sales.filter((_, i) => i !== index));
+//     }
+//   };
+
+//   // Validate sales entries and add them to the cart.
+//   const handleAddToCart = (e) => {
+//     e.preventDefault();
+//     setError("");
+//     setMessage("");
+//     for (let sale of sales) {
+//       if (!sale.itemName || !sale.company || !sale.quantity || !sale.price) {
+//         setError("All fields (except buyer) are required for every sale entry.");
+//         return;
+//       }
+//       if (Number(sale.quantity) <= 0 || Number(sale.price) <= 0) {
+//         setError("Quantity and Price must be greater than zero for every sale entry.");
+//         return;
+//       }
+//       // Check that the sale quantity does not exceed available quantity.
+//       if (sale.availableQuantity !== null && Number(sale.quantity) > Number(sale.availableQuantity)) {
+//         setError(`Quantity for "${sale.itemName}" cannot exceed available stock (${sale.availableQuantity}).`);
+//         return;
+//       }
+//     }
+//     if (!buyer.trim()) {
+//       setError("Buyer name is required.");
+//       return;
+//     }
+//     const updatedSales = sales.map(sale => ({
+//       item_name: sale.itemName,
+//       quantity: sale.quantity,
+//       buyer: buyer.trim(),
+//       price: sale.price
+//     }));
+//     setCart(prevCart => [...prevCart, ...updatedSales]);
+//     setMessage("Items added to cart.");
+//     setSales([initialSale]);
+//   };
+
+//   const handleProceedToBilling = () => {
+//     if (cart.length === 0) {
+//       setError("Cart is empty. Please add items to cart before proceeding to billing.");
+//       return;
+//     }
+//     navigate("/billing", { state: { cart } });
+//   };
+
+//   return (
+//     <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
+//       <div className="p-8 w-full max-w-2xl rounded-2xl" style={{ background: "#e0e0e0", boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff", backdropFilter: "blur(4px)" }}>
+//         <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: "Reospec", color: "#333" }}>
+//           Sell Multiple Items
+//         </h2>
+//         {/* Common Buyer Field */}
+//         <div className="mb-4">
+//           <input
+//             type="text"
+//             placeholder="Buyer Name"
+//             value={buyer}
+//             onChange={(e) => setBuyer(e.target.value)}
+//             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+//             style={{
+//               background: "#e0e0e0",
+//               border: "1px solid rgba(255,255,255,0.3)",
+//               boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+//             }}
+//           />
+//         </div>
+//         <form onSubmit={handleAddToCart} className="space-y-6">
+//           {sales.map((sale, index) => (
+//             <div key={index} className="p-4 rounded-xl mb-4" style={{ background: "#e0e0e0", boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff" }}>
+//               <div className="flex justify-between items-center mb-2">
+//                 <h3 className="text-lg font-bold text-gray-800">Sale {index + 1}</h3>
+//                 {sales.length > 1 && (
+//                   <button
+//                     type="button"
+//                     onClick={() => handleRemoveSale(index)}
+//                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-all text-sm"
+//                   >
+//                     Remove
+//                   </button>
+//                 )}
+//               </div>
+//               <SaleEntry sale={sale} index={index} handleSaleChange={handleSaleChange} allItems={allItems} />
+//               <input
+//                 type="text"
+//                 placeholder="Company Name"
+//                 value={sale.company}
+//                 className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none mt-2"
+//                 style={{
+//                   background: "#e0e0e0",
+//                   border: "1px solid rgba(255,255,255,0.3)",
+//                   boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+//                 }}
+//                 disabled
+//               />
+//               <div className="grid grid-cols-2 gap-4 mt-2">
+//                 <input
+//                   type="number"
+//                   placeholder="Quantity"
+//                   value={sale.quantity}
+//                   onChange={(e) => handleSaleChange(index, "quantity", e.target.value)}
+//                   className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+//                   style={{
+//                     background: "#e0e0e0",
+//                     border: "1px solid rgba(255,255,255,0.3)",
+//                     boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+//                   }}
+//                   // Maximum quantity is set to the available quantity of the selected item.
+//                   max={sale.availableQuantity || undefined}
+//                 />
+//                 <input
+//                   type="number"
+//                   placeholder="Price (₹)"
+//                   value={sale.price}
+//                   onChange={(e) => handleSaleChange(index, "price", e.target.value)}
+//                   className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+//                   style={{
+//                     background: "#e0e0e0",
+//                     border: "1px solid rgba(255,255,255,0.3)",
+//                     boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+//                   }}
+//                 />
+//               </div>
+//             </div>
+//           ))}
+//           <div className="flex justify-between">
+//             <button
+//               type="button"
+//               onClick={handleAddSale}
+//               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-all"
+//             >
+//               Add Another Sale
+//             </button>
+//             <button
+//               type="submit"
+//               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-all"
+//             >
+//               Add to Cart
+//             </button>
+//           </div>
+//         </form>
+//         <div className="mt-4 flex justify-center">
+//           <button
+//             type="button"
+//             onClick={handleProceedToBilling}
+//             className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded transition-all"
+//           >
+//             Proceed to Billing
+//           </button>
+//         </div>
+//         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+//         {message && <p className="mt-4 text-center text-green-500">{message}</p>}
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default SellMultipleItems;
+
+// updated for search item with autofill and quantity check
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api.js";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-// Child component for a single sale entry using a dropdown of available items
-function SaleEntry({ sale, index, handleSaleChange, allItems }) {
-  const handleSelectChange = (e) => {
-    const selectedName = e.target.value;
-    const selectedItem = allItems.find((item) => item.name === selectedName);
-    handleSaleChange(index, "itemName", selectedName);
-    handleSaleChange(index, "company", selectedItem ? selectedItem.company : "");
-    handleSaleChange(index, "availableQuantity", selectedItem ? selectedItem.quantity : null);
+// Child component for a single sale entry with autocomplete for item names
+function SaleEntry({ sale, index, handleSaleChange, handleSelectItem, allItems }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const containerRef = useRef(null);
+
+  // Filter suggestions based on input
+  useEffect(() => {
+    const inputText = sale.itemName || "";
+    if (!inputText) {
+      setSuggestions([]);
+      return;
+    }
+    const lowerInput = inputText.toLowerCase();
+    const filtered = allItems.filter(item =>
+      (item.name || "").toLowerCase().includes(lowerInput)
+    );
+    filtered.sort((a, b) => {
+      const aName = (a.name || "").toLowerCase();
+      const bName = (b.name || "").toLowerCase();
+      const aStarts = aName.startsWith(lowerInput) ? 0 : 1;
+      const bStarts = bName.startsWith(lowerInput) ? 0 : 1;
+      return aStarts - bStarts || aName.localeCompare(bName);
+    });
+    setSuggestions(filtered);
+  }, [sale.itemName, allItems]);
+
+  // Close suggestions if click happens outside this component
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSelectSuggestion = (suggestion) => {
+    // Use the dedicated handler to update the entire sale object
+    handleSelectItem(index, suggestion);
+    setSuggestions([]);
   };
 
   return (
-    <div className="relative">
-      <select
-        value={sale.itemName}
-        onChange={handleSelectChange}
+    <div className="relative" ref={containerRef}>
+      <input
+        type="text"
+        placeholder="Search item name"
+        value={sale.itemName || ""}
+        onChange={(e) => handleSaleChange(index, "itemName", e.target.value)}
         className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
         style={{
           background: "#e0e0e0",
           border: "1px solid rgba(255,255,255,0.3)",
           boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
         }}
-      >
-        <option value="">Select item</option>
-        {allItems.map((item, idx) => (
-          <option key={idx} value={item.name}>
-            {item.name}
-          </option>
-        ))}
-      </select>
+      />
+      {suggestions.length > 0 && (
+        <ul className="absolute z-10 left-0 right-0 bg-white border rounded shadow-md mt-1 max-h-48 overflow-auto">
+          {suggestions.map((suggestion, idx) => (
+            <li
+              key={idx}
+              // onMouseDown fires before the input loses focus
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelectSuggestion(suggestion);
+              }}
+              className="px-2 py-1 hover:bg-gray-200 cursor-pointer"
+            >
+              {suggestion.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -658,13 +956,11 @@ function SellMultipleItems() {
   const [allItems, setAllItems] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch the list of available items (with full details) for the dropdown.
-  // Ensure this endpoint returns an object with a "data" array.
+  // Fetch inventory details from the API
   useEffect(() => {
     const fetchItems = async () => {
       try {
         const res = await axios.get("/inventory/");
-        console.log("response", res);
         const items = res.data.data || [];
         setAllItems(items);
       } catch (err) {
@@ -674,16 +970,26 @@ function SellMultipleItems() {
     fetchItems();
   }, []);
 
-  console.log(allItems);
-
+  // Called on manual input change. Clears company and availableQuantity if user types.
   const handleSaleChange = (index, field, value) => {
     const newSales = [...sales];
     newSales[index][field] = value;
-    // If itemName is changed manually (e.g. reselecting), clear company and availableQuantity
     if (field === "itemName") {
       newSales[index]["company"] = "";
       newSales[index]["availableQuantity"] = null;
     }
+    setSales(newSales);
+  };
+
+  // When a suggestion is selected, update the entire sale object at once.
+  const handleSelectItem = (index, suggestion) => {
+    const newSales = [...sales];
+    newSales[index] = {
+      ...newSales[index],
+      itemName: suggestion.name,
+      company: suggestion.company,
+      availableQuantity: suggestion.quantity
+    };
     setSales(newSales);
   };
 
@@ -697,7 +1003,6 @@ function SellMultipleItems() {
     }
   };
 
-  // Validate sales entries and add them to the cart.
   const handleAddToCart = (e) => {
     e.preventDefault();
     setError("");
@@ -711,9 +1016,13 @@ function SellMultipleItems() {
         setError("Quantity and Price must be greater than zero for every sale entry.");
         return;
       }
-      // Check that the sale quantity does not exceed available quantity.
-      if (sale.availableQuantity !== null && Number(sale.quantity) > Number(sale.availableQuantity)) {
-        setError(`Quantity for "${sale.itemName}" cannot exceed available stock (${sale.availableQuantity}).`);
+      if (
+        sale.availableQuantity !== null &&
+        Number(sale.quantity) > Number(sale.availableQuantity)
+      ) {
+        setError(
+          `Quantity for "${sale.itemName}" cannot exceed available stock (${sale.availableQuantity}).`
+        );
         return;
       }
     }
@@ -722,7 +1031,8 @@ function SellMultipleItems() {
       return;
     }
     const updatedSales = sales.map(sale => ({
-      item_name: sale.itemName,
+      itemName: sale.itemName,
+      company: sale.company,
       quantity: sale.quantity,
       buyer: buyer.trim(),
       price: sale.price
@@ -730,6 +1040,7 @@ function SellMultipleItems() {
     setCart(prevCart => [...prevCart, ...updatedSales]);
     setMessage("Items added to cart.");
     setSales([initialSale]);
+    console.log("cart", sales);
   };
 
   const handleProceedToBilling = () => {
@@ -742,11 +1053,18 @@ function SellMultipleItems() {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
-      <div className="p-8 w-full max-w-2xl rounded-2xl" style={{ background: "#e0e0e0", boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff", backdropFilter: "blur(4px)" }}>
+      <div
+        className="p-8 w-full max-w-2xl rounded-2xl"
+        style={{
+          background: "#e0e0e0",
+          boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
+          backdropFilter: "blur(4px)"
+        }}
+      >
         <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: "Reospec", color: "#333" }}>
           Sell Multiple Items
         </h2>
-        {/* Common Buyer Field */}
+        {/* Buyer Field */}
         <div className="mb-4">
           <input
             type="text"
@@ -763,7 +1081,14 @@ function SellMultipleItems() {
         </div>
         <form onSubmit={handleAddToCart} className="space-y-6">
           {sales.map((sale, index) => (
-            <div key={index} className="p-4 rounded-xl mb-4" style={{ background: "#e0e0e0", boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff" }}>
+            <div
+              key={index}
+              className="p-4 rounded-xl mb-4"
+              style={{
+                background: "#e0e0e0",
+                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+              }}
+            >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-bold text-gray-800">Sale {index + 1}</h3>
                 {sales.length > 1 && (
@@ -776,7 +1101,13 @@ function SellMultipleItems() {
                   </button>
                 )}
               </div>
-              <SaleEntry sale={sale} index={index} handleSaleChange={handleSaleChange} allItems={allItems} />
+              <SaleEntry
+                sale={sale}
+                index={index}
+                handleSaleChange={handleSaleChange}
+                handleSelectItem={handleSelectItem}
+                allItems={allItems}
+              />
               <input
                 type="text"
                 placeholder="Company Name"
@@ -790,32 +1121,40 @@ function SellMultipleItems() {
                 disabled
               />
               <div className="grid grid-cols-2 gap-4 mt-2">
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  value={sale.quantity}
-                  onChange={(e) => handleSaleChange(index, "quantity", e.target.value)}
-                  className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-                  style={{
-                    background: "#e0e0e0",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-                  }}
-                  // Maximum quantity is set to the available quantity of the selected item.
-                  max={sale.availableQuantity || undefined}
-                />
-                <input
-                  type="number"
-                  placeholder="Price (₹)"
-                  value={sale.price}
-                  onChange={(e) => handleSaleChange(index, "price", e.target.value)}
-                  className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-                  style={{
-                    background: "#e0e0e0",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-                  }}
-                />
+                <div>
+                  <input
+                    type="number"
+                    placeholder="Quantity"
+                    value={sale.quantity}
+                    onChange={(e) => handleSaleChange(index, "quantity", e.target.value)}
+                    className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+                    style={{
+                      background: "#e0e0e0",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+                    }}
+                    max={sale.availableQuantity || undefined}
+                  />
+                  {sale.availableQuantity !== null && (
+                    <p className="text-red-500 mt-1 text-sm">
+                      Remaining: {sale.availableQuantity - (Number(sale.quantity) || 0)}
+                    </p>
+                  )}
+                </div>
+                <div className="self-start">
+                  <input
+                    type="number"
+                    placeholder="Price (₹)"
+                    value={sale.price}
+                    onChange={(e) => handleSaleChange(index, "price", e.target.value)}
+                    className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+                    style={{
+                      background: "#e0e0e0",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+                    }}
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -852,4 +1191,5 @@ function SellMultipleItems() {
 }
 
 export default SellMultipleItems;
+
 
