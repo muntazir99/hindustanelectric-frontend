@@ -852,7 +852,6 @@
 
 // export default SellMultipleItems;
 
-// updated for search item with autofill and quantity check
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api.js";
@@ -899,7 +898,7 @@ function SaleEntry({ sale, index, handleSaleChange, handleSelectItem, allItems }
   }, []);
 
   const handleSelectSuggestion = (suggestion) => {
-    // Use the dedicated handler to update the entire sale object
+    // Update the entire sale object with suggestion details
     handleSelectItem(index, suggestion);
     setSuggestions([]);
   };
@@ -923,7 +922,6 @@ function SaleEntry({ sale, index, handleSaleChange, handleSelectItem, allItems }
           {suggestions.map((suggestion, idx) => (
             <li
               key={idx}
-              // onMouseDown fires before the input loses focus
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleSelectSuggestion(suggestion);
@@ -945,7 +943,10 @@ function SellMultipleItems() {
     company: "",
     quantity: "",
     price: "",
-    availableQuantity: null
+    availableQuantity: null,
+    hsn_code: "",
+    unit_price: "",
+    image: ""
   };
 
   const [sales, setSales] = useState([initialSale]);
@@ -970,25 +971,30 @@ function SellMultipleItems() {
     fetchItems();
   }, []);
 
-  // Called on manual input change. Clears company and availableQuantity if user types.
+  // Update sale on manual input change; clear company/unit_price if itemName is changed.
   const handleSaleChange = (index, field, value) => {
     const newSales = [...sales];
     newSales[index][field] = value;
     if (field === "itemName") {
       newSales[index]["company"] = "";
       newSales[index]["availableQuantity"] = null;
+      newSales[index]["unit_price"] = "";
+      newSales[index]["image"] = "";
     }
     setSales(newSales);
   };
 
-  // When a suggestion is selected, update the entire sale object at once.
+  // When a suggestion is selected, update the entire sale object.
   const handleSelectItem = (index, suggestion) => {
     const newSales = [...sales];
     newSales[index] = {
       ...newSales[index],
       itemName: suggestion.name,
       company: suggestion.company,
-      availableQuantity: suggestion.quantity
+      availableQuantity: suggestion.quantity,
+      hsn_code: suggestion.hsn_code,
+      unit_price: suggestion.unit_price,
+      image: suggestion.image
     };
     setSales(newSales);
   };
@@ -1035,12 +1041,12 @@ function SellMultipleItems() {
       company: sale.company,
       quantity: sale.quantity,
       buyer: buyer.trim(),
-      price: sale.price
+      price: sale.price,
+      hsn_code: sale.hsn_code
     }));
     setCart(prevCart => [...prevCart, ...updatedSales]);
     setMessage("Items added to cart.");
     setSales([initialSale]);
-    console.log("cart", sales);
   };
 
   const handleProceedToBilling = () => {
@@ -1051,10 +1057,16 @@ function SellMultipleItems() {
     navigate("/billing", { state: { cart } });
   };
 
+  const totalCartItems = cart.reduce((sum, item) => sum + Number(item.quantity), 0);
+  const totalCartCost = cart.reduce(
+    (sum, item) => sum + Number(item.quantity) * Number(item.price),
+    0
+  );
+
   return (
-    <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
+    <div className="flex flex-col md:flex-row justify-center items-start min-h-screen p-6" style={{ background: "#f3f4f6" }}>
       <div
-        className="p-8 w-full max-w-2xl rounded-2xl"
+        className="p-8 w-full md:w-2/3 rounded-2xl mb-4 md:mb-0 md:mr-4"
         style={{
           background: "#e0e0e0",
           boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
@@ -1108,6 +1120,30 @@ function SellMultipleItems() {
                 handleSelectItem={handleSelectItem}
                 allItems={allItems}
               />
+              {/* Item Card: shows photo, remaining quantity and buying price */}
+              {sale.itemName && sale.unit_price && (
+                <div className="mt-2 p-4 border rounded flex items-center">
+                  {sale.image ? (
+                    <img
+                      src={sale.image}
+                      alt={sale.itemName}
+                      className="w-16 h-16 object-cover mr-4"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-200 flex items-center justify-center mr-4 text-sm text-gray-500">
+                      No Image
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold">
+                      Remaining: {sale.availableQuantity}
+                    </p>
+                    <p className="text-sm">
+                      Buying Price: ₹{sale.unit_price}
+                    </p>
+                  </div>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Company Name"
@@ -1174,22 +1210,63 @@ function SellMultipleItems() {
             </button>
           </div>
         </form>
-        <div className="mt-4 flex justify-center">
-          <button
-            type="button"
-            onClick={handleProceedToBilling}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded transition-all"
-          >
-            Proceed to Billing
-          </button>
-        </div>
         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
         {message && <p className="mt-4 text-center text-green-500">{message}</p>}
+      </div>
+
+      {/* Right Column: Cart Summary */}
+      <div className="w-full md:w-1/3 lg:w-1/4">
+        <div className="bg-white rounded-xl shadow-md p-6 h-full flex flex-col">
+          <h2 className="text-xl font-bold mb-4" style={{ fontFamily: "Reospec" }}>
+            Cart Summary
+          </h2>
+          <div className="flex-1 overflow-auto">
+            {cart.length === 0 ? (
+              <p className="text-gray-500">No items in cart</p>
+            ) : (
+              <ul className="space-y-3">
+                {cart.map((c, idx) => {
+                  const itemTotal = Number(c.quantity) * Number(c.price);
+                  return (
+                    <li key={idx} className="border-b pb-2">
+                      <div className="flex justify-between">
+                        <p className="text-gray-700 font-semibold">
+                          {c.itemName} <span className="text-sm text-gray-500">({c.company})</span>
+                        </p>
+                        <p className="text-gray-700">₹{itemTotal.toFixed(2)}</p>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Qty: {c.quantity} | Price: ₹{c.price}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <div className="mt-4 border-t pt-4 text-gray-700">
+            <div className="flex justify-between mb-1">
+              <span className="font-semibold">Total Items:</span>
+              <span>{totalCartItems}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="font-semibold">Subtotal:</span>
+              <span>₹{totalCartCost.toFixed(2)}</span>
+            </div>
+            <button
+              onClick={handleProceedToBilling}
+              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded transition-all"
+            >
+              Checkout
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 export default SellMultipleItems;
+
 
 
