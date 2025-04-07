@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: "https://hindustanelectric.onrender.com",
-  baseURL: "http://localhost:5001",
+  baseURL: "https://hindustanelectric.onrender.com",
+  // baseURL: "http://localhost:5001",
   // base // Update this if the backend URL is different
 });
 
