@@ -349,9 +349,8 @@ function Dashboard() {
           <div className="flex justify-around mb-4">
             <button
               onClick={() => setActiveSideTab("recent")}
-              className={`px-3 py-1 rounded-md ${
-                activeSideTab === "recent" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-              }`}
+              className={`px-3 py-1 rounded-md ${activeSideTab === "recent" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                }`}
               style={{
                 boxShadow: activeSideTab === "recent" ? "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff" : "",
               }}
@@ -360,9 +359,8 @@ function Dashboard() {
             </button>
             <button
               onClick={() => setActiveSideTab("quick")}
-              className={`px-3 py-1 rounded-md ${
-                activeSideTab === "quick" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-              }`}
+              className={`px-3 py-1 rounded-md ${activeSideTab === "quick" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                }`}
               style={{
                 boxShadow: activeSideTab === "quick" ? "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff" : "",
               }}
@@ -391,15 +389,15 @@ function Dashboard() {
                       log.buyer && log.buyer.trim() !== ""
                         ? log.buyer
                         : log.company && log.company.trim() !== ""
-                        ? log.company
-                        : "n/a";
+                          ? log.company
+                          : "n/a";
                     const dateValue = log.timestamp
                       ? new Date(log.timestamp).toLocaleString()
                       : log.date_alloted
-                      ? new Date(log.date_alloted).toLocaleString()
-                      : log.date_returned
-                      ? new Date(log.date_returned).toLocaleString()
-                      : "N/A";
+                        ? new Date(log.date_alloted).toLocaleString()
+                        : log.date_returned
+                          ? new Date(log.date_returned).toLocaleString()
+                          : "N/A";
                     return (
                       <tr key={index} className="border-b">
                         <td className="px-2 py-1 text-xs text-center">{dateValue}</td>
@@ -419,36 +417,59 @@ function Dashboard() {
             <div>
               <h3 className="text-lg text-gray-800 mb-2">Quick Actions</h3>
               <div className="space-y-3">
-                <button
-                  onClick={() => navigate("/inventory/add")}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
-                  style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
-                >
-                  Add Inventory
-                </button>
-                <button
-                  onClick={() => navigate("/logs/allot")}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-all"
-                  style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
-                >
-                  Sell Item
-                </button>
-                <button
-                  onClick={() => navigate("/logs/return")}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
-                  style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
-                >
-                  Return Item
-                </button>
-                {user?.role === "admin" && (
-                  <button
-                    onClick={() => navigate("/create-user")}
-                    className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md transition-all"
-                    style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
-                  >
-                    Create User
-                  </button>
-                )}
+                {
+                  user.role === "admin" ? (
+                    <>
+                      <button
+                        onClick={() => navigate("/inventory/add")}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
+                        style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                      >
+                        Add Inventory
+                      </button>
+                      <button
+                        onClick={() => navigate("/logs/allot")}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-all"
+                        style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                      >
+                        Sell Item
+                      </button>
+                      <button
+                        onClick={() => navigate("/logs/return")}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
+                        style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                      >
+                        Return Item
+                      </button>
+                      {user?.role === "admin" && (
+                        <button
+                          onClick={() => navigate("/create-user")}
+                          className="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md transition-all"
+                          style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                        >
+                          Create User
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => navigate("/logs/allot")}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-all"
+                        style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                      >
+                        Sell Item
+                      </button>
+                      <button
+                        onClick={() => navigate("/logs/return")}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
+                        style={{ boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff" }}
+                      >
+                        Return Item
+                      </button>
+                    </>
+                  )
+                }
               </div>
             </div>
           )}

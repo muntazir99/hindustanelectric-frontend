@@ -25,7 +25,7 @@ function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/login" element={<Login />} />
-        
+
         {/* Protected Routes wrapped in Layout */}
         <Route
           element={isAuthenticated ? <Layout user={user} handleLogout={handleLogout} /> : <Navigate to="/login" replace />}
@@ -41,7 +41,7 @@ function App() {
           <Route path="/create-user" element={<CreateUser />} />
           <Route path="/billing" element={<Billing />} />
         </Route>
-        
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
       </Routes>
