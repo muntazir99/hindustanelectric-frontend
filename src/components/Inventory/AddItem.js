@@ -11,6 +11,7 @@ function AddItem() {
     date: "",
     category: "",
     minimumStock: "",
+    barcode: "",
     hsn_code: "",   // New field for HSN code
     image: ""       // New field for image URL (optional)
   };
@@ -62,6 +63,7 @@ function AddItem() {
         date: "",
         category: data.category || "",
         minimumStock: data.minimum_stock || "",
+        barcode: data.barcode || "",
         hsn_code: data.hsn_code || "",
         image: data.image || ""
       });
@@ -94,7 +96,7 @@ function AddItem() {
     setMessage("");
     setLoading(true);
 
-    if (!item.name || !item.company || !item.unitPrice || !item.quantity || !item.date || !item.hsn_code) {
+    if (!item.name || !item.company || !item.unitPrice || !item.quantity || !item.date || !item.hsn_code || !item.barcode) {
       setError("Name, Company, Unit Price, Quantity, Date and HSN Code are required.");
       return;
     }
@@ -112,6 +114,7 @@ function AddItem() {
         date_of_addition: item.date,
         category: item.category || undefined,
         minimum_stock: item.minimumStock ? parseInt(item.minimumStock) : undefined,
+        barcode: item.barcode,
         hsn_code: item.hsn_code,
         image: item.image || undefined
       });
@@ -251,6 +254,19 @@ function AddItem() {
             placeholder="Minimum Stock (optional)"
             value={item.minimumStock}
             onChange={(e) => handleChange("minimumStock", e.target.value)}
+            className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
+            style={{
+              background: "#e0e0e0",
+              border: "1px solid rgba(255,255,255,0.3)",
+              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
+            }}
+          />
+
+          <input
+            type="text"
+            placeholder="Barcode"
+            value={item.barcode}
+            onChange={(e) => handleChange("barcode", e.target.value)}
             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
             style={{
               background: "#e0e0e0",
