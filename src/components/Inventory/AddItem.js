@@ -1,6 +1,6 @@
-// src/components/Inventory/AddItem.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "../../api.js";
+import { UploadIcon } from "lucide-react";
 
 function AddItem() {
   const initialItem = {
@@ -12,14 +12,14 @@ function AddItem() {
     category: "",
     minimumStock: "",
     barcode: "",
-    hsn_code: "",   // New field for HSN code
-    image: ""       // New field for image URL (optional)
+    file: "",
+    hsn_code: "",
   };
 
   const [item, setItem] = useState(initialItem);
+  const [imageFile, setImageFile] = useState(null); // File upload state
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
   const [availableNames, setAvailableNames] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef(null);
@@ -49,12 +49,9 @@ function AddItem() {
   const handleSuggestionClick = async (suggestion) => {
     setShowSuggestions(false);
     setFetchLoading(true);
-
     try {
       const res = await axios.get(`/inventory/item/${suggestion.object_id}`);
       const data = res.data.data;
-
-      console.log("Fetched item data:", data);
       setItem({
         name: data.name || "",
         company: data.company || "",
@@ -65,7 +62,6 @@ function AddItem() {
         minimumStock: data.minimum_stock || "",
         barcode: data.barcode || "",
         hsn_code: data.hsn_code || "",
-        image: data.image || ""
       });
     } catch (err) {
       console.error("Error fetching item details:", err);
@@ -73,7 +69,6 @@ function AddItem() {
       setFetchLoading(false);
     }
   };
-
 
   const handleClickOutside = (e) => {
     if (suggestionsRef.current && !suggestionsRef.current.contains(e.target)) {
@@ -90,6 +85,20 @@ function AddItem() {
     setItem({ ...item, [field]: value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image (JPG/PNG) or PDF file.");
+      return;
+    }
+
+    setImageFile(file);
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -97,36 +106,45 @@ function AddItem() {
     setLoading(true);
 
     if (!item.name || !item.company || !item.unitPrice || !item.quantity || !item.date || !item.hsn_code || !item.barcode) {
-      setError("Name, Company, Unit Price, Quantity, Date and HSN Code are required.");
+      setError("Name, Company, Unit Price, Quantity, Date, Barcode, and HSN Code are required.");
+      setLoading(false);
       return;
     }
+
     if (Number(item.quantity) <= 0 || Number(item.unitPrice) <= 0) {
       setError("Unit Price and Quantity must be greater than zero.");
+      setLoading(false);
       return;
     }
 
     try {
-      const res = await axios.post("/inventory/add", {
-        name: item.name.trim().toLowerCase(),
-        company: item.company.trim().toLowerCase(),
-        unit_price: parseFloat(item.unitPrice),
-        quantity: parseInt(item.quantity),
-        date_of_addition: item.date,
-        category: item.category || undefined,
-        minimum_stock: item.minimumStock ? parseInt(item.minimumStock) : undefined,
-        barcode: item.barcode,
-        hsn_code: item.hsn_code,
-        image: item.image || undefined
+      const formData = new FormData();
+      formData.append("name", item.name.trim().toLowerCase());
+      formData.append("company", item.company.trim().toLowerCase());
+      formData.append("unit_price", item.unitPrice);
+      formData.append("quantity", item.quantity);
+      formData.append("date_of_addition", item.date);
+      formData.append("barcode", item.barcode);
+      formData.append("hsn_code", item.hsn_code);
+
+      if (item.category) formData.append("category", item.category);
+      if (item.minimumStock) formData.append("minimum_stock", item.minimumStock);
+      if (imageFile) formData.append("file", imageFile);
+
+      const res = await axios.post("/inventory/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      setMessage(res.data.message);
+
+      setMessage(res.data.message || "Item added successfully.");
       setItem(initialItem);
+      setImageFile(null);
     } catch (err) {
+      console.error(err);
       setError(err.response?.data?.message || "Failed to add item. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
@@ -135,15 +153,13 @@ function AddItem() {
         style={{
           background: "#e0e0e0",
           boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
-          backdropFilter: "blur(4px)"
         }}
       >
-        <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: "Reospec" }}>
+        <h2 className="text-2xl font-bold mb-6 text-center text-black" style={{ fontFamily: "Reospec" }}>
           Add Inventory Item
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Item Name with Autocomplete */}
           <div className="relative">
             <input
               type="text"
@@ -152,48 +168,39 @@ function AddItem() {
               onChange={handleNameChange}
               onFocus={() => setShowSuggestions(true)}
               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-              style={{
-                background: "#e0e0e0",
-                border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-              }}
+              style={inputStyle}
             />
             {showSuggestions && (
               <div
                 ref={suggestionsRef}
                 className="absolute z-10 w-full mt-1 bg-gray-200 rounded shadow-lg max-h-40 overflow-auto text-black"
               >
-                {!loading ? (availableNames.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="px-3 py-2 hover:bg-gray-300 cursor-pointer"
-                    onMouseDown={() => handleSuggestionClick(item)}
-                  >
-                    {item.name}
-                  </div>
-                ))) : (
+                {!loading ? (
+                  availableNames.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="px-3 py-2 hover:bg-gray-300 cursor-pointer"
+                      onMouseDown={() => handleSuggestionClick(item)}
+                    >
+                      {item.name}
+                    </div>
+                  ))
+                ) : (
                   <p className="px-5 py-2">Loading...</p>
                 )}
-
               </div>
             )}
           </div>
 
-          {/* Company */}
           <input
             type="text"
             placeholder="Company Name"
             value={item.company}
             onChange={(e) => handleChange("company", e.target.value)}
             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-            style={{
-              background: "#e0e0e0",
-              border: "1px solid rgba(255,255,255,0.3)",
-              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-            }}
+            style={inputStyle}
           />
 
-          {/* Unit Price and Quantity */}
           <div className="grid grid-cols-2 gap-4">
             <input
               type="number"
@@ -201,11 +208,7 @@ function AddItem() {
               value={item.unitPrice}
               onChange={(e) => handleChange("unitPrice", e.target.value)}
               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-              style={{
-                background: "#e0e0e0",
-                border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-              }}
+              style={inputStyle}
             />
             <input
               type="number"
@@ -213,103 +216,95 @@ function AddItem() {
               value={item.quantity}
               onChange={(e) => handleChange("quantity", e.target.value)}
               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-              style={{
-                background: "#e0e0e0",
-                border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-              }}
+              style={inputStyle}
             />
           </div>
 
-          {/* Date and Category */}
           <div className="grid grid-cols-2 gap-4">
             <input
               type="date"
               value={item.date}
               onChange={(e) => handleChange("date", e.target.value)}
               className="w-full p-3 rounded-xl text-gray-800 focus:outline-none"
-              style={{
-                background: "#e0e0e0",
-                border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-              }}
+              style={inputStyle}
             />
             <input
               type="text"
-              placeholder="Category (optional)"
+              placeholder="Category"
               value={item.category}
               onChange={(e) => handleChange("category", e.target.value)}
               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-              style={{
-                background: "#e0e0e0",
-                border: "1px solid rgba(255,255,255,0.3)",
-                boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-              }}
+              style={inputStyle}
             />
           </div>
 
-          {/* Minimum Stock */}
           <input
             type="number"
             placeholder="Minimum Stock (optional)"
             value={item.minimumStock}
             onChange={(e) => handleChange("minimumStock", e.target.value)}
             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-            style={{
-              background: "#e0e0e0",
-              border: "1px solid rgba(255,255,255,0.3)",
-              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-            }}
+            style={inputStyle}
           />
-
           <input
             type="text"
             placeholder="Barcode"
             value={item.barcode}
             onChange={(e) => handleChange("barcode", e.target.value)}
             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-            style={{
-              background: "#e0e0e0",
-              border: "1px solid rgba(255,255,255,0.3)",
-              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-            }}
+            style={inputStyle}
           />
-
-          {/* HSN Code */}
           <input
             type="text"
             placeholder="HSN Code"
             value={item.hsn_code}
             onChange={(e) => handleChange("hsn_code", e.target.value)}
             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-            style={{
-              background: "#e0e0e0",
-              border: "1px solid rgba(255,255,255,0.3)",
-              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-            }}
+            style={inputStyle}
           />
 
-          {/* Image URL (optional) */}
+          {/* Image Upload */}
           <input
-            type="text"
-            placeholder="Image URL (optional)"
-            value={item.image}
-            onChange={(e) => handleChange("image", e.target.value)}
-            className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-            style={{
-              background: "#e0e0e0",
-              border: "1px solid rgba(255,255,255,0.3)",
-              boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff"
-            }}
+            type="file"
+            accept="image/*,application/pdf"
+            id="file"
+            onChange={handleFileChange}
+            className="w-full p-2 bg-white text-black rounded-xl hidden"
           />
+
+          <div className="flex gap-2 justify-between items-center w-full p-3 rounded-xl text-gray-800 cursor-pointer" style={inputStyle}>
+            <label htmlFor="file" className="flex gap-2 items-center cursor-pointer">
+              <UploadIcon />
+              <span>{imageFile ? imageFile.name : "Upload Image / PDF"}</span>
+            </label>
+
+            {imageFile && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageFile(null);
+                  document.getElementById("file").value = null;
+                }}
+                className="text-red-500"
+                title="Clear file"
+              >
+                ❌
+              </button>
+            )}
+          </div>
+
+
+
 
           {fetchLoading && <small className="text-gray-500 p-3">Autofilling details...</small>}
 
-          {/* Action Buttons */}
           <div className="flex justify-between">
             <button
               type="button"
-              onClick={() => setItem(initialItem)}
+              onClick={() => {
+                setItem(initialItem);
+                setImageFile(null);
+              }}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-all"
             >
               Clear & New
@@ -318,16 +313,22 @@ function AddItem() {
               type="submit"
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-all"
             >
-              Add Item
+              {loading ? "Adding..." : "Add Item"}
             </button>
           </div>
         </form>
 
         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
         {message && <p className="mt-4 text-center text-green-500">{message}</p>}
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
+
+const inputStyle = {
+  background: "#e0e0e0",
+  border: "1px solid rgba(255,255,255,0.3)",
+  boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff",
+};
 
 export default AddItem;
