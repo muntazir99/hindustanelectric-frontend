@@ -236,7 +236,7 @@
 //   return (
 //     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
 //       <h2 className="text-2xl font-bold mb-4">Generate Invoice</h2>
-      
+
 //         {/* Supplier Information */}
 //         <div className="mb-4">
 //       <h3 className="font-semibold">Supplier Information</h3>
@@ -442,6 +442,7 @@ function Billing() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [invoiceGenerated, setInvoiceGenerated] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState("");
 
   // Calculate total for each billing item row
   const calculateRowTotal = (item) => {
@@ -490,6 +491,8 @@ function Billing() {
       const payload = { sales: formattedSales };
       const res = await axios.post("/inventory/sell-multiple", payload);
       setMessage(res.data.message || "Billing processed successfully.");
+      setInvoiceNumber(res.data.invoice_number || "")
+      console.log("Invoice Number:", res.data.invoice_number);
       setInvoiceGenerated(true);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to process billing.");
@@ -510,7 +513,7 @@ function Billing() {
 
     // --------------------- TOP SECTION ---------------------
     // Define invoice info variables
-    const invoiceNo = "380"; // Replace or generate dynamically as needed
+    const invoiceNo = invoiceNumber; // Replace or generate dynamically as needed
     const invoiceDate = dateOfIssuance || "20-03-2025";
     const placeOfSupply = supplier.place || "Bihar (10)";
     const reverseCharge = supplier.reverseCharge || "N";
@@ -734,7 +737,7 @@ function Billing() {
       ],
     ];
 
-    
+
     doc.autoTable({
       startY: bottomStartY,
       body: bottomBody,
