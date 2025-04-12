@@ -105,7 +105,7 @@ function LogsByFilter() {
   return (
     <div className="p-6" style={{ background: "#e0e0e0", minHeight: "100vh" }}>
       <h1 className="text-2xl font-bold mb-6 text-center">Transaction Logs</h1>
-      
+
       {/* Main Tabs */}
       <div className="mb-4 flex justify-center space-x-4">
         {["all", "buyer", "company"].map((tab) => (
@@ -116,9 +116,8 @@ function LogsByFilter() {
               setActiveFilter("all");
               setSearchTerm("");
             }}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              activeMainTab === tab ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-            }`}
+            className={`px-4 py-2 rounded-md font-medium transition-all ${activeMainTab === tab ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+              }`}
             style={{
               boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
             }}
@@ -156,15 +155,15 @@ function LogsByFilter() {
             <option value="all">All {activeMainTab}</option>
             {activeMainTab === "buyer"
               ? filteredBuyerNames.map((name, idx) => (
-                  <option key={idx} value={name}>
-                    {name.charAt(0).toUpperCase() + name.slice(1)}
-                  </option>
-                ))
+                <option key={idx} value={name}>
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
+                </option>
+              ))
               : filteredCompanyNames.map((name, idx) => (
-                  <option key={idx} value={name}>
-                    {name.charAt(0).toUpperCase() + name.slice(1)}
-                  </option>
-                ))}
+                <option key={idx} value={name}>
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
+                </option>
+              ))}
           </select>
         </div>
       )}
@@ -191,7 +190,7 @@ function LogsByFilter() {
             </tr>
           </thead>
           <tbody>
-            {displayedLogs.map((log, index) => {
+            {displayedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((log, index) => {
               const quantityValue =
                 log.quantity_added || log.quantity_sold || log.quantity || "N/A";
               let displayName = "";
@@ -210,16 +209,16 @@ function LogsByFilter() {
                   log.buyer && log.buyer.trim() !== ""
                     ? log.buyer
                     : log.company && log.company.trim() !== ""
-                    ? log.company
-                    : "N/A";
+                      ? log.company
+                      : "N/A";
               }
               const dateValue = log.timestamp
                 ? new Date(log.timestamp).toLocaleString()
                 : log.date_alloted
-                ? new Date(log.date_alloted).toLocaleString()
-                : log.date_returned
-                ? new Date(log.date_returned).toLocaleString()
-                : "N/A";
+                  ? new Date(log.date_alloted).toLocaleString()
+                  : log.date_returned
+                    ? new Date(log.date_returned).toLocaleString()
+                    : "N/A";
 
               return (
                 <tr key={index} className="border-b">
