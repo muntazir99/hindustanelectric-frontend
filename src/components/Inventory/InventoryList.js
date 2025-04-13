@@ -43,6 +43,10 @@ function InventoryList() {
     }));
   };
 
+  console.log("Inventory:", inventory);
+  console.log("Expanded Groups:", expandedGroups);
+  console.log("Grouped Inventory:", groupedInventory);
+
   return (
     <div className="p-6" style={{ background: "#e0e0e0", minHeight: "100vh" }}>
       <h1 className="text-2xl font-bold mb-6 text-center">Inventory List</h1>

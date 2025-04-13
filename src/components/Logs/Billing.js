@@ -566,7 +566,7 @@ function Billing() {
       ],
       [
         {
-          content: `Party Details :\n${partyName}\n${partyAddress}\nGSTIN / UIN    : ${partyGSTIN}`,
+          content: `Party Details :\n${partyName}\n${partyAddress}\n${partyGSTIN ? `GSTIN : ${partyGSTIN}` : ""}`,
           styles: { halign: "left", fontSize: 10 },
         },
         {
@@ -758,8 +758,28 @@ function Billing() {
       },
     });
 
-    // Save the PDF and navigate to dashboard
-    doc.save("invoice.pdf");
+    // doc.save("invoice.pdf"); // Optional, for user download
+
+    // Convert to Blob and send to backend
+    const pdfBlob = doc.output("blob"); // jsPDF gives a Blob
+
+    const formData = new FormData();
+    formData.append("file", pdfBlob, `invoice_${invoiceNo}.pdf`);
+    formData.append("invoiceNumber", invoiceNo);
+    formData.append("billType", isGstBill ? "gst" : "nongst");
+
+    axios
+      .post("/upload/bill", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => {
+        console.log("Upload success:", res.data);
+        navigate("/dashboard");
+      })
+      .catch((err) => {
+        console.error("Upload failed:", err);
+        setError("Failed to upload invoice.");
+      });
     navigate("/dashboard");
   };
 
