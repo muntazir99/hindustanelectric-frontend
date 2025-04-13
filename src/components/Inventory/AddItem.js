@@ -146,6 +146,8 @@ function AddItem() {
     }
   };
 
+  console.log("imagefile", imageFile);
+
   return (
     <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
       <div

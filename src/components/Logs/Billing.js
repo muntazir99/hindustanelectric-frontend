@@ -426,6 +426,7 @@ function Billing() {
   );
 
   // Invoice details
+  const [isGstBill, setIsGstBill] = useState(false);
   const [supplier, setSupplier] = useState({
     name: "",
     gstin: "",
@@ -488,10 +489,16 @@ function Billing() {
         discount: parseFloat(item.discount || 0),
         hsn_code: item.hsn_code || "",
       }));
-      const payload = { sales: formattedSales };
+
+      const payload = {
+        sales: formattedSales,
+        is_gst: isGstBill,
+        recipient_gst: isGstBill ? recipient.gstin.trim() : undefined,
+      };
+
       const res = await axios.post("/inventory/sell-multiple", payload);
       setMessage(res.data.message || "Billing processed successfully.");
-      setInvoiceNumber(res.data.invoice_number || "")
+      setInvoiceNumber(res.data.invoice_number || "");
       console.log("Invoice Number:", res.data.invoice_number);
       setInvoiceGenerated(true);
     } catch (err) {
@@ -517,10 +524,10 @@ function Billing() {
     const invoiceDate = dateOfIssuance || "20-03-2025";
     const placeOfSupply = supplier.place || "Bihar (10)";
     const reverseCharge = supplier.reverseCharge || "N";
-    const partyName = recipient.name || "HINDUSTAN ELECTRIC";
+    const partyName = recipient.name || "";
     // Use newline for multi-line address if needed
-    const partyAddress = recipient.address || "BRAMHPURA\nMUZAFFRAPUR-842001";
-    const partyGSTIN = recipient.gstin || "10AIPPA4282R1ZZ";
+    const partyAddress = recipient.address || "";
+    const partyGSTIN = recipient.gstin || "";
 
     // Build rows for the top section.
     // In this version, the GSTIN / UIN info is appended to the party details cell.
@@ -811,13 +818,15 @@ function Billing() {
           onChange={(e) => setRecipient({ ...recipient, name: e.target.value })}
           className="w-full p-2 border rounded mt-1"
         />
-        <input
-          type="text"
-          placeholder="Recipient GSTIN"
-          value={recipient.gstin}
-          onChange={(e) => setRecipient({ ...recipient, gstin: e.target.value })}
-          className="w-full p-2 border rounded mt-1"
-        />
+        {isGstBill && (
+          <input
+            type="text"
+            placeholder="Recipient GSTIN"
+            value={recipient.gstin}
+            onChange={(e) => setRecipient({ ...recipient, gstin: e.target.value })}
+            className="w-full p-2 border rounded mt-1"
+          />
+        )}
         <input
           type="text"
           placeholder="Recipient Address"
@@ -893,6 +902,16 @@ function Billing() {
       </div>
 
       {/* Action Buttons */}
+      <div className="mb-4">
+        <label>
+          <input
+            type="checkbox"
+            checked={isGstBill}
+            onChange={(e) => setIsGstBill(e.target.checked)}
+          />
+          {" "}Generate GST Invoice
+        </label>
+      </div>
       <div className="flex justify-between">
         <button
           onClick={handleSubmitBilling}
