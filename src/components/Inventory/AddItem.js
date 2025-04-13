@@ -89,15 +89,23 @@ function AddItem() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const validTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+    // Sync with backend's allowed extensions
+    const validTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+      "image/bmp",
+      "image/webp",
+      "application/pdf",
+    ];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a valid image (JPG/PNG) or PDF file.");
+      alert("Please upload a valid file (JPG, PNG, GIF, BMP, WebP, or PDF).");
       return;
     }
 
     setImageFile(file);
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -105,14 +113,34 @@ function AddItem() {
     setMessage("");
     setLoading(true);
 
-    if (!item.name || !item.company || !item.unitPrice || !item.quantity || !item.date || !item.hsn_code || !item.barcode) {
+    // Validate required fields
+    if (
+      !item.name ||
+      !item.company ||
+      !item.unitPrice ||
+      !item.quantity ||
+      !item.date ||
+      !item.hsn_code ||
+      !item.barcode
+    ) {
       setError("Name, Company, Unit Price, Quantity, Date, Barcode, and HSN Code are required.");
       setLoading(false);
       return;
     }
 
-    if (Number(item.quantity) <= 0 || Number(item.unitPrice) <= 0) {
+    // Validate numeric fields
+    const unitPrice = Number(item.unitPrice);
+    const quantity = Number(item.quantity);
+    const minimumStock = item.minimumStock ? Number(item.minimumStock) : null;
+
+    if (unitPrice <= 0 || quantity <= 0) {
       setError("Unit Price and Quantity must be greater than zero.");
+      setLoading(false);
+      return;
+    }
+
+    if (minimumStock !== null && minimumStock < 0) {
+      setError("Minimum Stock cannot be negative.");
       setLoading(false);
       return;
     }
@@ -128,16 +156,20 @@ function AddItem() {
       formData.append("hsn_code", item.hsn_code);
 
       if (item.category) formData.append("category", item.category);
-      if (item.minimumStock) formData.append("minimum_stock", item.minimumStock);
+      if (minimumStock !== null) formData.append("minimum_stock", minimumStock);
       if (imageFile) formData.append("file", imageFile);
 
       const res = await axios.post("/inventory/add", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Assuming JWT is stored
+        },
       });
 
       setMessage(res.data.message || "Item added successfully.");
       setItem(initialItem);
       setImageFile(null);
+      document.getElementById("file").value = null; // Clear file input
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Failed to add item. Please try again.");
@@ -265,16 +297,18 @@ function AddItem() {
             style={inputStyle}
           />
 
-          {/* Image Upload */}
           <input
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/png,image/jpeg,image/gif,image/bmp,image/webp,application/pdf"
             id="file"
             onChange={handleFileChange}
             className="w-full p-2 bg-white text-black rounded-xl hidden"
           />
 
-          <div className="flex gap-2 justify-between items-center w-full p-3 rounded-xl text-gray-800 cursor-pointer" style={inputStyle}>
+          <div
+            className="flex gap-2 justify-between items-center w-full p-3 rounded-xl text-gray-800 cursor-pointer"
+            style={inputStyle}
+          >
             <label htmlFor="file" className="flex gap-2 items-center cursor-pointer">
               <UploadIcon />
               <span>{imageFile ? imageFile.name : "Upload Image / PDF"}</span>
