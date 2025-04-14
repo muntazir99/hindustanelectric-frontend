@@ -758,7 +758,7 @@ function Billing() {
       },
     });
 
-    // doc.save("invoice.pdf"); // Optional, for user download
+    doc.save("invoice.pdf"); // Optional, for user download
 
     // Convert to Blob and send to backend
     const pdfBlob = doc.output("blob"); // jsPDF gives a Blob
