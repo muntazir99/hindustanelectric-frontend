@@ -4,8 +4,10 @@ import axios from "../../api.js";
 
 function InventoryList() {
   const [inventory, setInventory] = useState([]);
-  // Control expansion by category name
+  const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -13,14 +15,26 @@ function InventoryList() {
         const res = await axios.get("/inventory/");
         setInventory(res.data.data || []);
       } catch (err) {
-        console.error("Failed to fetch inventory.");
+        console.error("Failed to fetch inventory.", err);
       }
     };
     fetchInventory();
   }, []);
 
-  // Group items by category (defaulting to "Uncategorized")
-  const groupedInventory = inventory.reduce((groups, item) => {
+  // Handle search input change.
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filter inventory based on search term.
+  const filteredInventory = searchTerm
+    ? inventory.filter((item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : inventory;
+
+  // Group items by category (or "Uncategorized" if category is missing).
+  const groupedInventory = filteredInventory.reduce((groups, item) => {
     const category = item.category ? item.category : "Uncategorized";
     if (!groups[category]) {
       groups[category] = [];
@@ -29,10 +43,10 @@ function InventoryList() {
     return groups;
   }, {});
 
-  // Sorted categories alphabetically
+  // Alphabetically sort the category keys.
   const sortedCategories = Object.keys(groupedInventory).sort();
 
-  // Toggle expanded state for a category
+  // Toggle expanded state for a category.
   const toggleCategory = (category) => {
     setExpandedCategories((prev) => ({
       ...prev,
@@ -40,18 +54,84 @@ function InventoryList() {
     }));
   };
 
-  // Placeholder image when item.image is falsy
+  // When "Edit" is clicked, open the modal for that item.
+  const handleEdit = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      name: item.name || "",
+      company: item.company || "",
+      quantity: item.quantity || "",
+      unit_price: item.unit_price || "",
+      category: item.category || "",
+      barcode: item.barcode || "",
+      hsn_code: item.hsn_code || "",
+      // Optionally, include image if you allow editing image:
+      // image: item.image || ""
+    });
+  };
+
+  // Update the edit form state.
+  const handleEditChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Submit the update for the edited item.
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Prepare payload; here we assume that to identify which record to update,
+      // the backend expects the item name and company (or ideally a unique _id).
+      const payload = {
+        originalName: editingItem.name, // Use an identifier, or _id if available
+        originalCompany: editingItem.company,
+        ...editForm,
+      };
+      // Send the update request (modify URL/method if necessary)
+      const res = await axios.put("/inventory/update", payload);
+      // Update local state: Replace the matching item with updated data.
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.name === editingItem.name && item.company === editingItem.company
+            ? { ...item, ...editForm }
+            : item
+        )
+      );
+      setEditingItem(null);
+    } catch (err) {
+      console.error("Error updating item:", err);
+      // Optionally set error state or display a message.
+    }
+  };
+
+  // Cancel editing.
+  const handleEditCancel = () => {
+    setEditingItem(null);
+  };
+
+  // Placeholder image if no image is available.
   const placeholderImage = "https://via.placeholder.com/150?text=No+Image";
 
   return (
     <div className="p-6 min-h-screen bg-gray-100">
       <h1 className="text-2xl font-bold mb-6 text-center">Inventory List</h1>
+      <div className="mb-6 max-w-md mx-auto">
+        <input
+          type="text"
+          placeholder="Search items..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
       <div className="max-w-6xl mx-auto space-y-6">
         {sortedCategories.map((category) => {
           const items = groupedInventory[category];
           const isExpanded = expandedCategories[category];
           return (
-            <div key={category} className="bg-white border border-gray-300 rounded-md shadow-sm">
+            <div
+              key={category}
+              className="bg-white border border-gray-300 rounded-md shadow-sm"
+            >
               {/* Category header with toggle */}
               <div
                 className="flex justify-between items-center px-4 py-3 cursor-pointer bg-gray-50"
@@ -69,51 +149,166 @@ function InventoryList() {
                   {isExpanded ? "▲" : "▼"}
                 </button>
               </div>
-              {/* Expanded grid of cards */}
+              {/* Expanded grid of item cards */}
               {isExpanded && (
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {items.map((item, index) => {
-                    return (
-                      <div
-                        key={index}
-                        className="bg-white border border-gray-300 rounded-md shadow-sm p-4 flex flex-col"
+                  {items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="relative bg-white border border-gray-300 rounded-md shadow-sm p-4 flex flex-col"
+                    >
+                      {/* Edit button at top right */}
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
                       >
-                        {/* Item header */}
-                        <h3 className="text-base font-semibold text-gray-800 text-center mb-2">
-                          {item.name}
-                        </h3>
-                        {/* Item image */}
-                        <div className="flex justify-center mb-4">
-                          <img
-                            src={item.image || placeholderImage}
-                            alt={item.name}
-                            className="object-cover w-40 h-40 rounded-md"
-                          />
-                        </div>
-                        {/* Details */}
-                        <div className="text-sm text-gray-700 space-y-1">
-                          <p>
-                            <span className="font-medium">Company:</span> {item.company || "N/A"}
-                          </p>
-                          <p>
-                            <span className="font-medium">Quantity:</span> {item.quantity}
-                          </p>
-                          <p>
-                            <span className="font-medium">Unit Price (₹):</span> {Number(item.unit_price).toFixed(2)}
-                          </p>
-                          <p>
-                            <span className="font-medium">Category:</span> {item.category || "N/A"}
-                          </p>
-                        </div>
+                        Edit
+                      </button>
+                      <h3 className="text-base font-semibold text-gray-800 text-center mb-2">
+                        {item.name}
+                      </h3>
+                      <div className="flex justify-center mb-4">
+                        <img
+                          src={item.image || placeholderImage}
+                          alt={item.name}
+                          className="object-cover w-40 h-40 rounded-md"
+                        />
                       </div>
-                    );
-                  })}
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <p>
+                          <span className="font-medium">Company:</span>{" "}
+                          {item.company || "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Quantity:</span>{" "}
+                          {item.quantity}
+                        </p>
+                        <p>
+                          <span className="font-medium">Unit Price (₹):</span>{" "}
+                          {Number(item.unit_price).toFixed(2)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Category:</span>{" "}
+                          {item.category || "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Barcode:</span>{" "}
+                          {item.barcode || "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">HSN Code:</span>{" "}
+                          {item.hsn_code || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4">Edit Item</h2>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 mb-1">Item Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => handleEditChange("name", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={editForm.company}
+                  onChange={(e) => handleEditChange("company", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    value={editForm.quantity}
+                    onChange={(e) =>
+                      handleEditChange("quantity", e.target.value)
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1">Unit Price (₹)</label>
+                  <input
+                    type="number"
+                    value={editForm.unit_price}
+                    onChange={(e) =>
+                      handleEditChange("unit_price", e.target.value)
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={editForm.category}
+                  onChange={(e) =>
+                    handleEditChange("category", e.target.value)
+                  }
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-1">Barcode</label>
+                <input
+                  type="text"
+                  value={editForm.barcode}
+                  onChange={(e) =>
+                    handleEditChange("barcode", e.target.value)
+                  }
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-1">HSN Code</label>
+                <input
+                  type="text"
+                  value={editForm.hsn_code}
+                  onChange={(e) =>
+                    handleEditChange("hsn_code", e.target.value)
+                  }
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex justify-end space-x-4 mt-4">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -127,14 +322,13 @@ export default InventoryList;
 
 // function InventoryList() {
 //   const [inventory, setInventory] = useState([]);
-//   // Group expansion state: key is the item name, value is a boolean
-//   const [expandedGroups, setExpandedGroups] = useState({});
+//   const [searchTerm, setSearchTerm] = useState(""); // New state for search term
+//   const [expandedCategories, setExpandedCategories] = useState({});
 
 //   useEffect(() => {
 //     const fetchInventory = async () => {
 //       try {
 //         const res = await axios.get("/inventory/");
-//         // Ensure we have an array (or default to empty array)
 //         setInventory(res.data.data || []);
 //       } catch (err) {
 //         console.error("Failed to fetch inventory.");
@@ -143,124 +337,115 @@ export default InventoryList;
 //     fetchInventory();
 //   }, []);
 
-//   // Group inventory by item name (all in lowercase for consistency)
-//   const groupedInventory = inventory.reduce((groups, item) => {
-//     const key = item.name.toLowerCase();
-//     if (!groups[key]) {
-//       groups[key] = [];
+//   // Filter the inventory based on search term without disturbing the original list.
+//   // If searchTerm is empty, use the full inventory.
+//   const filteredInventory = searchTerm
+//     ? inventory.filter(item =>
+//         item.name.toLowerCase().includes(searchTerm.toLowerCase())
+//       )
+//     : inventory;
+
+//   // Group items by category (defaulting to "Uncategorized") from filteredInventory.
+//   const groupedInventory = filteredInventory.reduce((groups, item) => {
+//     const category = item.category ? item.category : "Uncategorized";
+//     if (!groups[category]) {
+//       groups[category] = [];
 //     }
-//     groups[key].push(item);
+//     groups[category].push(item);
 //     return groups;
 //   }, {});
 
-//   // Optionally compute a total quantity per group
-//   const computeGroupTotal = (items) => {
-//     return items.reduce((sum, item) => sum + Number(item.quantity), 0);
-//   };
+//   // Sorted categories alphabetically.
+//   const sortedCategories = Object.keys(groupedInventory).sort();
 
-//   // Toggle expanded state for a given group key
-//   const toggleGroup = (itemName) => {
-//     setExpandedGroups((prev) => ({
+//   // Toggle expanded state for a given category.
+//   const toggleCategory = (category) => {
+//     setExpandedCategories(prev => ({
 //       ...prev,
-//       [itemName]: !prev[itemName],
+//       [category]: !prev[category],
 //     }));
 //   };
 
-//   console.log("Inventory:", inventory);
-//   console.log("Expanded Groups:", expandedGroups);
-//   console.log("Grouped Inventory:", groupedInventory);
+//   // Placeholder image if no image is available.
+//   const placeholderImage = "https://via.placeholder.com/150?text=No+Image";
 
 //   return (
-//     <div className="p-6" style={{ background: "#e0e0e0", minHeight: "100vh" }}>
+//     <div className="p-6 min-h-screen bg-gray-100">
 //       <h1 className="text-2xl font-bold mb-6 text-center">Inventory List</h1>
-//       <div
-//         className="overflow-x-auto mx-auto"
-//         style={{
-//           maxWidth: "800px",
-//           background: "#e0e0e0",
-//           borderRadius: "12px",
-//           boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff",
-//         }}
-//       >
-//         <table className="w-full table-auto">
-//           <thead>
-//             <tr className="bg-gray-300">
-//               <th className="px-4 py-2 text-sm text-center">Item</th>
-//               <th className="px-4 py-2 text-sm text-center">Total Quantity</th>
-//               <th className="px-4 py-2 text-sm text-center">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {Object.entries(groupedInventory).map(([itemName, items]) => (
-//               <React.Fragment key={itemName}>
-//                 <tr className="border-b">
-//                   <td className="px-4 py-2 text-xs text-center font-semibold">
-//                     {items[0].name}
-//                   </td>
-//                   <td className="px-4 py-2 text-xs text-center">
-//                     {computeGroupTotal(items)}
-//                   </td>
-//                   <td className="px-4 py-2 text-xs text-center">
-//                     <button
-//                       onClick={() => toggleGroup(itemName)}
-//                       className="px-3 py-1 rounded-md transition-all bg-blue-500 text-white shadow-md"
+
+//       {/* Search Field */}
+//       <div className="mb-6 max-w-md mx-auto">
+//         <input
+//           type="text"
+//           placeholder="Search items..."
+//           value={searchTerm}
+//           onChange={(e) => setSearchTerm(e.target.value)}
+//           className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+//         />
+//       </div>
+
+//       <div className="max-w-6xl mx-auto space-y-6">
+//         {sortedCategories.map((category) => {
+//           const items = groupedInventory[category];
+//           const isExpanded = expandedCategories[category];
+//           return (
+//             <div key={category} className="bg-white border border-gray-300 rounded-md shadow-sm">
+//               {/* Category header with toggle */}
+//               <div
+//                 className="flex justify-between items-center px-4 py-3 cursor-pointer bg-gray-50"
+//                 onClick={() => toggleCategory(category)}
+//               >
+//                 <div className="flex items-center space-x-2">
+//                   <h2 className="text-lg font-semibold text-gray-800">
+//                     {category}
+//                   </h2>
+//                   <span className="text-sm text-gray-600">
+//                     ({items.length} {items.length === 1 ? "item" : "items"})
+//                   </span>
+//                 </div>
+//                 <button className="text-gray-600 focus:outline-none">
+//                   {isExpanded ? "▲" : "▼"}
+//                 </button>
+//               </div>
+//               {/* Expanded grid of cards */}
+//               {isExpanded && (
+//                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+//                   {items.map((item, index) => (
+//                     <div
+//                       key={index}
+//                       className="bg-white border border-gray-300 rounded-md shadow-sm p-4 flex flex-col"
 //                     >
-//                       {expandedGroups[itemName] ? "Hide Details" : "View Details"}
-//                     </button>
-//                   </td>
-//                 </tr>
-//                 {expandedGroups[itemName] && (
-//                   <tr>
-//                     <td colSpan="3" className="px-4 py-2">
-//                       <div
-//                         className="bg-white p-4 rounded-lg"
-//                         style={{
-//                           boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
-//                         }}
-//                       >
-//                         <h3 className="text-lg font-bold mb-2">
-//                           Details for {items[0].name}
-//                         </h3>
-//                         <table className="w-full table-auto">
-//                           <thead>
-//                             <tr className="bg-gray-200">
-//                               <th className="px-2 py-1 text-sm text-center">Company</th>
-//                               <th className="px-2 py-1 text-sm text-center">Quantity</th>
-//                               <th className="px-2 py-1 text-sm text-center">Unit Price (₹)</th>
-//                               {items[0].category && (
-//                                 <th className="px-2 py-1 text-sm text-center">Category</th>
-//                               )}
-//                             </tr>
-//                           </thead>
-//                           <tbody>
-//                             {items.map((item, idx) => (
-//                               <tr key={idx} className="border-b">
-//                                 <td className="px-2 py-1 text-xs text-center">
-//                                   {item.company}
-//                                 </td>
-//                                 <td className="px-2 py-1 text-xs text-center">
-//                                   {item.quantity}
-//                                 </td>
-//                                 <td className="px-2 py-1 text-xs text-center">
-//                                   {item.unit_price.toFixed(2)}
-//                                 </td>
-//                                 {item.category && (
-//                                   <td className="px-2 py-1 text-xs text-center">
-//                                     {item.category}
-//                                   </td>
-//                                 )}
-//                               </tr>
-//                             ))}
-//                           </tbody>
-//                         </table>
+//                       <h3 className="text-base font-semibold text-gray-800 text-center mb-2">
+//                         {item.name}
+//                       </h3>
+//                       <div className="flex justify-center mb-4">
+//                         <img
+//                           src={item.image || placeholderImage}
+//                           alt={item.name}
+//                           className="object-cover w-40 h-40 rounded-md"
+//                         />
 //                       </div>
-//                     </td>
-//                   </tr>
-//                 )}
-//               </React.Fragment>
-//             ))}
-//           </tbody>
-//         </table>
+//                       <div className="text-sm text-gray-700 space-y-1">
+//                         <p>
+//                           <span className="font-medium">Company:</span> {item.company || "N/A"}
+//                         </p>
+//                         <p>
+//                           <span className="font-medium">Quantity:</span> {item.quantity}
+//                         </p>
+//                         <p>
+//                           <span className="font-medium">Unit Price (₹):</span> {Number(item.unit_price).toFixed(2)}
+//                         </p>
+//                         <p>
+//                           <span className="font-medium">Category:</span> {item.category || "N/A"}
+//                         </p>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+//           );
+//         })}
 //       </div>
 //     </div>
 //   );
