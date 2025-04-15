@@ -38,6 +38,10 @@ function Navbar({ user, handleLogout }) {
         <NavLink to="/calendar" className={linkClass}>
           Calendar
         </NavLink>
+        <NavLink to="/invoices" className={linkClass}>
+          invoices
+        </NavLink>
+        
       </div>
 
       {/* Logout Button in top-right */}

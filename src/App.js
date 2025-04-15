@@ -10,6 +10,7 @@ import Login from "./components/Auth/LoginAuth.js";
 import CreateUser from "./components/Auth/CreateUser.js";
 import Billing from "./components/Logs/Billing.js";
 import Layout from "./components/Common/Layout.js";
+import InvoiceList from "./components/Invoices/InvoiceList.js";
 
 function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -40,6 +41,7 @@ function App() {
           <Route path="/calendar" element={<CalendarDashboard />} />
           <Route path="/create-user" element={<CreateUser />} />
           <Route path="/billing" element={<Billing />} />
+          <Route path="/invoices" element={<InvoiceList />} />
         </Route>
 
         {/* Fallback */}
