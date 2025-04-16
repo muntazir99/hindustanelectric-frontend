@@ -627,12 +627,21 @@ function Billing() {
     }
 
     // Append Grand Total row (ensuring totals are under the correct columns)
+    const taxableAmount = overallTotal / 1.18;
+    const taxAmount = overallTotal - taxableAmount;
     const totalQuantity = billingItems.reduce((acc, item) => acc + Number(item.quantity), 0);
+    const totalAmount = overallTotal + taxAmount;
     tableBody.push([
-      { content: "Grand Total", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
+      { content: "Total", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
       `${totalQuantity.toFixed(2)} Pcs.`,
       "", "", "",
       { content: overallTotal.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+    ]);
+
+    tableBody.push([
+      { content: "Total Amount (Tax Inc.)", colSpan: 6, styles: { halign: "right", fontStyle: "bold" } },
+      "",
+      { content: totalAmount.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
     ]);
 
     // Distribute available width proportionally across 8 columns
@@ -662,8 +671,6 @@ function Billing() {
 
     // --------------------- TAX SUMMARY SECTION ---------------------
     const taxRate = 18;
-    const taxableAmount = overallTotal / 1.18;
-    const taxAmount = overallTotal - taxableAmount;
     const cgst = taxAmount / 2;
     const sgst = taxAmount / 2;
 
