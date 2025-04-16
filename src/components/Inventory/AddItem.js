@@ -213,15 +213,19 @@ function AddItem() {
                 className="absolute z-10 w-full mt-1 bg-gray-50 rounded-lg shadow-md max-h-40 overflow-auto text-gray-800 text-sm"
               >
                 {!loading ? (
-                  availableNames.map((suggestion, idx) => (
-                    <div
-                      key={idx}
-                      className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-                      onMouseDown={() => handleSuggestionClick(suggestion)}
-                    >
-                      {suggestion.name}
-                    </div>
-                  ))
+                  availableNames
+                    .filter((suggestion) =>
+                      suggestion.name.toLowerCase().includes(item.name.toLowerCase())
+                    )
+                    .map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                        onMouseDown={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion.name}
+                      </div>
+                    ))
                 ) : (
                   <p className="px-5 py-2">Loading...</p>
                 )}
