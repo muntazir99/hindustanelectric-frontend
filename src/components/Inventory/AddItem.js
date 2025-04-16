@@ -13,12 +13,12 @@ function AddItem() {
     category: "",
     minimumStock: "",
     barcode: "",
-    file: "",
+    file: "",   // Not required; optional image upload.
     hsn_code: "",
   };
 
   const [item, setItem] = useState(initialItem);
-  const [imageFile, setImageFile] = useState(null); // File upload state
+  const [imageFile, setImageFile] = useState(null); // File upload state (optional)
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [availableNames, setAvailableNames] = useState([]);
@@ -90,7 +90,7 @@ function AddItem() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Allowed file types
+    // Allowed file types (image/PDF)
     const validTypes = [
       "image/png",
       "image/jpeg",
@@ -101,9 +101,10 @@ function AddItem() {
       "application/pdf",
     ];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a valid file (JPG, PNG, GIF, BMP, WebP, or PDF).");
+      alert("Please upload a valid file (JPG, PNG, WebP, GIF, BMP or PDF).");
       return;
     }
+
     setImageFile(file);
   };
 
@@ -113,7 +114,7 @@ function AddItem() {
     setMessage("");
     setLoading(true);
 
-    // Validate required fields
+    // Validate required fields (note: file/image is now optional)
     if (
       !item.name ||
       !item.company ||
@@ -155,9 +156,16 @@ function AddItem() {
       formData.append("barcode", item.barcode);
       formData.append("hsn_code", item.hsn_code);
 
-      if (item.category) formData.append("category", item.category);
-      if (minimumStock !== null) formData.append("minimum_stock", minimumStock);
-      if (imageFile) formData.append("file", imageFile);
+      if (item.category) {
+        formData.append("category", item.category);
+      }
+      if (minimumStock !== null) {
+        formData.append("minimum_stock", minimumStock);
+      }
+      // Only append file if one was selected; file upload is optional.
+      if (imageFile) {
+        formData.append("file", imageFile);
+      }
 
       const res = await axios.post("/inventory/add", formData, {
         headers: {
@@ -284,7 +292,7 @@ function AddItem() {
             className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
-          {/* Custom file upload */}
+          {/* Custom file upload: Optional */}
           <input
             type="file"
             accept="image/png,image/jpeg,image/gif,image/bmp,image/webp,application/pdf"
@@ -296,7 +304,7 @@ function AddItem() {
           <div className="flex gap-2 justify-between items-center w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 cursor-pointer focus:outline-none">
             <label htmlFor="file" className="flex gap-2 items-center cursor-pointer">
               <UploadIcon />
-              <span>{imageFile ? imageFile.name : "Upload Image / PDF"}</span>
+              <span>{imageFile ? imageFile.name : "Upload Image / PDF (Optional)"}</span>
             </label>
             {imageFile && (
               <button
@@ -348,7 +356,7 @@ function AddItem() {
 
 export default AddItem;
 
-
+// // src/components/Inventory/AddItem.js
 // import React, { useState, useEffect, useRef } from "react";
 // import axios from "../../api.js";
 // import { UploadIcon } from "lucide-react";
@@ -440,7 +448,7 @@ export default AddItem;
 //     const file = e.target.files[0];
 //     if (!file) return;
 
-//     // Sync with backend's allowed extensions
+//     // Allowed file types
 //     const validTypes = [
 //       "image/png",
 //       "image/jpeg",
@@ -451,10 +459,9 @@ export default AddItem;
 //       "application/pdf",
 //     ];
 //     if (!validTypes.includes(file.type)) {
-//       alert("Please upload a valid file (JPG, PNG, GIF, BMP, WebP, or PDF).");
+//       alert("Please upload a valid file (JPG, PNG, WebP).");
 //       return;
 //     }
-
 //     setImageFile(file);
 //   };
 
@@ -513,7 +520,7 @@ export default AddItem;
 //       const res = await axios.post("/inventory/add", formData, {
 //         headers: {
 //           "Content-Type": "multipart/form-data",
-//           Authorization: `Bearer ${localStorage.getItem("token")}`, // Assuming JWT is stored
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
 //         },
 //       });
 
@@ -529,22 +536,18 @@ export default AddItem;
 //     }
 //   };
 
-//   console.log("imagefile", imageFile);
-
 //   return (
-//     <div className="flex justify-center items-center min-h-screen p-6" style={{ background: "#f3f4f6" }}>
-//       <div
-//         className="p-8 w-full max-w-md rounded-2xl text-white"
-//         style={{
-//           background: "#e0e0e0",
-//           boxShadow: "8px 8px 16px #bebebe, -8px -8px 16px #ffffff",
-//         }}
-//       >
-//         <h2 className="text-2xl font-bold mb-6 text-center text-black" style={{ fontFamily: "Reospec" }}>
+//     <div className="flex justify-center items-center min-h-screen p-6 bg-gray-100">
+//       <div className="p-8 w-full max-w-md rounded-lg bg-white border border-gray-300 shadow-sm">
+//         <h2
+//           className="text-2xl font-bold mb-6 text-center text-gray-800"
+//           style={{ fontFamily: "Reospec" }}
+//         >
 //           Add Inventory Item
 //         </h2>
 
 //         <form onSubmit={handleSubmit} className="space-y-4">
+//           {/* Item Name with suggestions */}
 //           <div className="relative">
 //             <input
 //               type="text"
@@ -552,22 +555,21 @@ export default AddItem;
 //               value={item.name}
 //               onChange={handleNameChange}
 //               onFocus={() => setShowSuggestions(true)}
-//               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//               style={inputStyle}
+//               className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //             />
 //             {showSuggestions && (
 //               <div
 //                 ref={suggestionsRef}
-//                 className="absolute z-10 w-full mt-1 bg-gray-200 rounded shadow-lg max-h-40 overflow-auto text-black"
+//                 className="absolute z-10 w-full mt-1 bg-gray-50 rounded-lg shadow-md max-h-40 overflow-auto text-gray-800 text-sm"
 //               >
 //                 {!loading ? (
-//                   availableNames.map((item, idx) => (
+//                   availableNames.map((suggestion, idx) => (
 //                     <div
 //                       key={idx}
-//                       className="px-3 py-2 hover:bg-gray-300 cursor-pointer"
-//                       onMouseDown={() => handleSuggestionClick(item)}
+//                       className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+//                       onMouseDown={() => handleSuggestionClick(suggestion)}
 //                     >
-//                       {item.name}
+//                       {suggestion.name}
 //                     </div>
 //                   ))
 //                 ) : (
@@ -582,8 +584,7 @@ export default AddItem;
 //             placeholder="Company Name"
 //             value={item.company}
 //             onChange={(e) => handleChange("company", e.target.value)}
-//             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//             style={inputStyle}
+//             className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //           />
 
 //           <div className="grid grid-cols-2 gap-4">
@@ -592,16 +593,14 @@ export default AddItem;
 //               placeholder="Unit Price (₹)"
 //               value={item.unitPrice}
 //               onChange={(e) => handleChange("unitPrice", e.target.value)}
-//               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//               style={inputStyle}
+//               className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //             />
 //             <input
 //               type="number"
 //               placeholder="Total Quantity"
 //               value={item.quantity}
 //               onChange={(e) => handleChange("quantity", e.target.value)}
-//               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//               style={inputStyle}
+//               className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //             />
 //           </div>
 
@@ -610,16 +609,14 @@ export default AddItem;
 //               type="date"
 //               value={item.date}
 //               onChange={(e) => handleChange("date", e.target.value)}
-//               className="w-full p-3 rounded-xl text-gray-800 focus:outline-none"
-//               style={inputStyle}
+//               className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //             />
 //             <input
 //               type="text"
 //               placeholder="Category"
 //               value={item.category}
 //               onChange={(e) => handleChange("category", e.target.value)}
-//               className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//               style={inputStyle}
+//               className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //             />
 //           </div>
 
@@ -628,43 +625,37 @@ export default AddItem;
 //             placeholder="Minimum Stock (optional)"
 //             value={item.minimumStock}
 //             onChange={(e) => handleChange("minimumStock", e.target.value)}
-//             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//             style={inputStyle}
+//             className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //           />
 //           <input
 //             type="text"
 //             placeholder="Barcode"
 //             value={item.barcode}
 //             onChange={(e) => handleChange("barcode", e.target.value)}
-//             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//             style={inputStyle}
+//             className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //           />
 //           <input
 //             type="text"
 //             placeholder="HSN Code"
 //             value={item.hsn_code}
 //             onChange={(e) => handleChange("hsn_code", e.target.value)}
-//             className="w-full p-3 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none"
-//             style={inputStyle}
+//             className="w-full p-3 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 //           />
 
+//           {/* Custom file upload */}
 //           <input
 //             type="file"
 //             accept="image/png,image/jpeg,image/gif,image/bmp,image/webp,application/pdf"
 //             id="file"
 //             onChange={handleFileChange}
-//             className="w-full p-2 bg-white text-black rounded-xl hidden"
+//             className="hidden"
 //           />
 
-//           <div
-//             className="flex gap-2 justify-between items-center w-full p-3 rounded-xl text-gray-800 cursor-pointer"
-//             style={inputStyle}
-//           >
+//           <div className="flex gap-2 justify-between items-center w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 cursor-pointer focus:outline-none">
 //             <label htmlFor="file" className="flex gap-2 items-center cursor-pointer">
 //               <UploadIcon />
 //               <span>{imageFile ? imageFile.name : "Upload Image / PDF"}</span>
 //             </label>
-
 //             {imageFile && (
 //               <button
 //                 onClick={(e) => {
@@ -680,10 +671,11 @@ export default AddItem;
 //             )}
 //           </div>
 
-
-
-
-//           {fetchLoading && <small className="text-gray-500 p-3">Autofilling details...</small>}
+//           {fetchLoading && (
+//             <small className="block text-center text-gray-500">
+//               Autofilling details...
+//             </small>
+//           )}
 
 //           <div className="flex justify-between">
 //             <button
@@ -692,13 +684,13 @@ export default AddItem;
 //                 setItem(initialItem);
 //                 setImageFile(null);
 //               }}
-//               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-all"
+//               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
 //             >
 //               Clear & New
 //             </button>
 //             <button
 //               type="submit"
-//               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-all"
+//               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
 //             >
 //               {loading ? "Adding..." : "Add Item"}
 //             </button>
@@ -707,15 +699,10 @@ export default AddItem;
 
 //         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
 //         {message && <p className="mt-4 text-center text-green-500">{message}</p>}
-//       </div >
-//     </div >
+//       </div>
+//     </div>
 //   );
 // }
 
-// const inputStyle = {
-//   background: "#e0e0e0",
-//   border: "1px solid rgba(255,255,255,0.3)",
-//   boxShadow: "inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff",
-// };
-
 // export default AddItem;
+
