@@ -627,8 +627,11 @@ function Billing() {
     }
 
     // Append Grand Total row (ensuring totals are under the correct columns)
-    const taxableAmount = overallTotal / 1.18;
-    const taxAmount = overallTotal - taxableAmount;
+    const taxRate = 18;
+    const taxableAmount = overallTotal * (1 + taxRate / 100);
+    const taxAmount = Math.abs(overallTotal - taxableAmount);
+    const cgst = taxAmount / 2;
+    const sgst = taxAmount / 2;
     const totalQuantity = billingItems.reduce((acc, item) => acc + Number(item.quantity), 0);
     const totalAmount = overallTotal + taxAmount;
     tableBody.push([
@@ -670,9 +673,6 @@ function Billing() {
     currentY = doc.lastAutoTable.finalY + 10;
 
     // --------------------- TAX SUMMARY SECTION ---------------------
-    const taxRate = 18;
-    const cgst = taxAmount / 2;
-    const sgst = taxAmount / 2;
 
     const taxHead = [
       [
@@ -686,7 +686,7 @@ function Billing() {
     const taxBody = [
       [
         `${taxRate}%`,
-        taxableAmount.toFixed(2),
+        overallTotal.toFixed(2),
         cgst.toFixed(2),
         sgst.toFixed(2),
         taxAmount.toFixed(2),
