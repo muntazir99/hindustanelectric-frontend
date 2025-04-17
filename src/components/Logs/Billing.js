@@ -449,15 +449,21 @@ function Billing() {
   const calculateRowTotal = (item) => {
     const qty = Number(item.quantity) || 0;
     const price = Number(item.price) || 0;
-    const baseTotal = qty * price;
-    const taxPercentage = Number(item.taxPercentage) || 0;
-    let taxAmount = 0;
-    if (!item.taxIncluded) {
-      taxAmount = baseTotal * (taxPercentage / 100);
-    }
     const discount = Number(item.discount) || 0;
-    return baseTotal + taxAmount - discount;
+    const taxPercentage = 18;
+
+    const baseTotal = qty * price;
+
+    if (item.taxIncluded) {
+      const discountedTotal = baseTotal - discount;
+      const taxMultiplier = 1 + (taxPercentage / 100);
+      const taxableAmount = discountedTotal / taxMultiplier;
+      return taxableAmount;
+    } else {
+      return baseTotal - discount;
+    }
   };
+
 
   // Overall total calculation
   const overallTotal = billingItems.reduce((sum, item) => sum + calculateRowTotal(item), 0);
@@ -704,8 +710,8 @@ function Billing() {
     currentY = doc.lastAutoTable.finalY + 10;
 
     // --------------------- AMOUNT IN WORDS ---------------------
-    const integerPart = Math.floor(overallTotal);
-    const fractionPart = Math.round((overallTotal - integerPart) * 100);
+    const integerPart = Math.floor(totalAmount);
+    const fractionPart = Math.round((totalAmount - integerPart) * 100);
     let amountInWords = toWords(integerPart);
     if (fractionPart > 0) {
       amountInWords += ` and ${fractionPart}/100`;
