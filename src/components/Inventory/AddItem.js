@@ -57,7 +57,7 @@ function AddItem() {
         name: data.name || "",
         company: data.company || "",
         unitPrice: data.unit_price || "",
-        quantity: data.quantity || "",
+        // quantity: data.quantity || "",
         date: "",
         category: data.category || "",
         minimumStock: data.minimum_stock || "",
