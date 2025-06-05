@@ -25,7 +25,9 @@ function Login() {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("role", response.data.role);
         console.log("Redirecting to /dashboard...");
-        navigate("/dashboard");
+        // navigate("/dashboard");
+        window.location.href = "/dashboard";
+
       } else {
         setError("Invalid credentials, please try again.");
       }
