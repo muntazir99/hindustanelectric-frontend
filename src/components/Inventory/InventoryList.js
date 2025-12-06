@@ -10,7 +10,7 @@ function InventoryList() {
 
   const fetchInventory = async () => {
     try {
-      const res = await api.get("/inventory/");
+      const res = await api.get("/inventory/?limit=1000");
       // Filter out any potential null/undefined items from the API response
       const validInventory = (res.data.data || []).filter(item => item);
       setInventory(validInventory);
