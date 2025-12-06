@@ -34,11 +34,11 @@ function Billing() {
     email: "jahangir9934@gmail.com",
     place: "Bihar (10)",
   });
-  
+
   // State for wholesale billing
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  
+
   // Recipient info is now derived from the selected customer or entered manually for retail
   const [recipient, setRecipient] = useState({ name: "", gstin: "", address: "" });
   const selectedCustomer = customers.find(c => c._id === selectedCustomerId);
@@ -54,7 +54,7 @@ function Billing() {
     dispatch(fetchCustomers());
     setDateOfIssuance(new Date().toISOString().split('T')[0]);
   }, [dispatch]);
-  
+
   // Update recipient fields when a wholesale customer is selected
   useEffect(() => {
     if (selectedCustomer) {
@@ -98,6 +98,7 @@ function Billing() {
 
     try {
       const formattedSales = billingItems.map((item) => ({
+        item_id: item.item_id || null, // Pass item_id to backend
         item_name: item.itemName.trim().toLowerCase(),
         company: item.company.trim().toLowerCase(),
         quantity: parseInt(item.quantity),
@@ -123,7 +124,7 @@ function Billing() {
       setInvoiceGenerated(true);
 
       if (paymentMethod === 'Credit') {
-          dispatch(fetchCustomers());
+        dispatch(fetchCustomers());
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to process billing.");
@@ -152,8 +153,8 @@ function Billing() {
           </select>
           {selectedCustomer && (
             <div className="mt-2 text-sm text-gray-600">
-                <p>Credit Limit: ₹{selectedCustomer.credit_limit.toFixed(2)}</p>
-                <p>Current Balance: ₹{selectedCustomer.current_balance.toFixed(2)}</p>
+              <p>Credit Limit: ₹{selectedCustomer.credit_limit.toFixed(2)}</p>
+              <p>Current Balance: ₹{selectedCustomer.current_balance.toFixed(2)}</p>
             </div>
           )}
         </div>
@@ -166,7 +167,7 @@ function Billing() {
           </select>
         </div>
       </div>
-      
+
       {/* Recipient Information is now dynamically filled or manually entered */}
       <div className="mb-4">
         <h3 className="font-semibold">Recipient Information</h3>
@@ -202,7 +203,7 @@ function Billing() {
         <div className="text-right text-lg font-semibold">Overall Total: ₹{overallTotal.toFixed(2)}</div>
       </div>
 
-      <div className="mb-4"><label className="flex items-center"><input type="checkbox" checked={isGstBill} onChange={(e) => setIsGstBill(e.target.checked)} className="mr-2"/>Generate GST Invoice</label></div>
+      <div className="mb-4"><label className="flex items-center"><input type="checkbox" checked={isGstBill} onChange={(e) => setIsGstBill(e.target.checked)} className="mr-2" />Generate GST Invoice</label></div>
       <div className="flex justify-between">
         <button onClick={handleSubmitBilling} disabled={invoiceGenerated} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded disabled:bg-gray-400">Generate Invoice</button>
         <button onClick={handlePrintAndUpload} disabled={!invoiceGenerated} className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded disabled:bg-gray-400">Print & Save PDF</button>

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { fetchPurchaseOrders, fetchSuppliers } from '../../store/purchaseOrderSlice.js';
+import { fetchPurchaseOrders } from '../../store/purchaseOrderSlice.js';
+import { fetchSuppliers } from '../../store/suppliersSlice.js';
 import api from '../../api.js';
 import StatusWrapper from '../Common/StatusWrapper.js';
 
@@ -13,7 +14,7 @@ function ReceiveGoods() {
 
   const { items: purchaseOrders, loading, error } = useSelector((state) => state.purchaseOrders);
   const [submissionError, setSubmissionError] = useState('');
-  
+
   const purchaseOrder = purchaseOrders.find(po => po._id === orderId);
 
   const getPreviouslyReceivedQty = (itemId) => {
@@ -37,7 +38,7 @@ function ReceiveGoods() {
       }) || []
     }
   });
-  
+
   const { fields } = useFieldArray({ control, name: "items" });
 
   useEffect(() => {
@@ -49,14 +50,14 @@ function ReceiveGoods() {
   const onSubmit = async (data) => {
     setSubmissionError('');
     try {
-        const payload = {
-            items: data.items.map(item => ({
-                item_id: item.item_id,
-                name: item.name,
-                quantity: parseInt(item.quantity_received, 10) || 0,
-                cost_price: parseFloat(item.cost_price)
-            }))
-        };
+      const payload = {
+        items: data.items.map(item => ({
+          item_id: item.item_id,
+          name: item.name,
+          quantity: parseInt(item.quantity_received, 10) || 0,
+          cost_price: parseFloat(item.cost_price)
+        }))
+      };
       await api.post(`/purchases/orders/${orderId}/receive`, payload);
       navigate('/purchase-orders');
     } catch (err) {
@@ -72,7 +73,7 @@ function ReceiveGoods() {
             <>
               <h1 className="text-2xl font-bold mb-2">Receive Goods for PO</h1>
               <p className="text-gray-600 mb-6">Supplier: <span className="font-semibold capitalize">{purchaseOrder.supplier_name}</span></p>
-              
+
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <table className="w-full table-auto">
                   <thead>

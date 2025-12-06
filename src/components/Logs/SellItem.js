@@ -80,6 +80,7 @@ function SaleEntry({ sale, index, handleSaleChange, handleSelectItem, allItems }
 
 function SellMultipleItems() {
   const initialSale = {
+    item_id: "", // Added ID field
     itemName: "",
     company: "",
     quantity: "",
@@ -117,6 +118,7 @@ function SellMultipleItems() {
     const newSales = [...sales];
     newSales[index][field] = value;
     if (field === "itemName") {
+      newSales[index]["item_id"] = ""; // Clear ID if name is typed manually
       newSales[index]["company"] = "";
       newSales[index]["availableQuantity"] = null;
       newSales[index]["unit_price"] = "";
@@ -130,6 +132,7 @@ function SellMultipleItems() {
     const newSales = [...sales];
     newSales[index] = {
       ...newSales[index],
+      item_id: suggestion._id, // Capture unique ID
       itemName: suggestion.name,
       company: suggestion.company,
       availableQuantity: suggestion.quantity,
@@ -178,6 +181,7 @@ function SellMultipleItems() {
       return;
     }
     const updatedSales = sales.map(sale => ({
+      item_id: sale.item_id, // Include ID in cart
       itemName: sale.itemName,
       company: sale.company,
       quantity: sale.quantity,

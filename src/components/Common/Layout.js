@@ -74,7 +74,6 @@ function Layout() {
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [activeSideTab, setActiveSideTab] = useState("quick");
   const [logs, setLogs] = useState([]);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -97,13 +96,10 @@ function Layout() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-      />
+      <Sidebar />
       <main
         className="flex-grow p-6 transition-all duration-300"
-        style={{ marginLeft: sidebarCollapsed ? "4rem" : "16rem" }}
+        style={{ marginLeft: "16rem" }}
       >
         {/* Child routes will be rendered here */}
         <Outlet />

@@ -14,16 +14,37 @@ function CalendarDashboard() {
     const fetchData = async () => {
       try {
         setError("");
-        // Format date as YYYY-MM-DD
+        // Fetch all data and filter client-side to avoid backend dependency on specific date endpoint
         const formattedDate = selectedDate.toISOString().split("T")[0];
-        const response = await api.get(`/inventory/by-date?date=${formattedDate}`);
-        // Expect response.data.data to include { inventory: [...], logs: [...] }
-        const { inventory, logs } = response.data.data;
-        setInventory(inventory || []);
-        setLogs(logs || []);
+        console.log("Fetching all data to filter for:", formattedDate);
+
+        const [inventoryRes, logsRes] = await Promise.all([
+          api.get("/inventory/"),
+          api.get("/logs/")
+        ]);
+
+        const allInventory = inventoryRes.data.data || [];
+        const allLogs = logsRes.data.data || [];
+
+        // Filter Inventory by date_of_addition
+        const filteredInventory = allInventory.filter(item => {
+          if (!item.date_of_addition) return false;
+          // Handle various date formats if necessary, but assuming ISO or YYYY-MM-DD
+          return item.date_of_addition.startsWith(formattedDate) ||
+            new Date(item.date_of_addition).toISOString().split("T")[0] === formattedDate;
+        });
+
+        // Filter Logs by timestamp
+        const filteredLogs = allLogs.filter(log => {
+          if (!log.timestamp) return false;
+          return new Date(log.timestamp).toISOString().split("T")[0] === formattedDate;
+        });
+
+        setInventory(filteredInventory);
+        setLogs(filteredLogs);
       } catch (err) {
-        console.error("Error fetching data for selected date:", err);
-        setError("Failed to fetch data for the selected date.");
+        console.error("Error fetching data:", err);
+        setError("Failed to fetch data. Please try again.");
       }
     };
 

@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { fetchSuppliers, addSupplier } from '../../store/suppliersSlice.js';
+import { useGetSuppliersQuery, useAddSupplierMutation } from '../../api/suppliersApi.js';
 import StatusWrapper from '../Common/StatusWrapper.js';
 
 function SupplierManager() {
-  const dispatch = useDispatch();
-  const { items: suppliers, loading, error } = useSelector((state) => state.suppliers);
+  const { data: suppliers = [], isLoading, isError, error } = useGetSuppliersQuery();
+  const [addSupplier, { isLoading: isAdding }] = useAddSupplierMutation();
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
   const [serverMessage, setServerMessage] = useState("");
 
-  useEffect(() => {
-    dispatch(fetchSuppliers());
-  }, [dispatch]);
-
   const onSubmit = async (data) => {
     setServerMessage("");
-    const resultAction = await dispatch(addSupplier(data));
-    if (addSupplier.fulfilled.match(resultAction)) {
+    try {
+      await addSupplier(data).unwrap();
       setServerMessage("Supplier added successfully!");
       reset();
-    } else {
-      setServerMessage(resultAction.payload || "An error occurred.");
+    } catch (err) {
+      setServerMessage(err.message || "An error occurred.");
     }
   };
 
@@ -57,17 +53,17 @@ function SupplierManager() {
               <label className="block text-sm font-medium text-gray-700">Address (Optional)</label>
               <textarea className="w-full p-2 border rounded mt-1" {...register("address")} />
             </div>
-            <button type="submit" disabled={loading} className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400">
-              {loading ? 'Saving...' : 'Save Supplier'}
+            <button type="submit" disabled={isAdding} className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400">
+              {isAdding ? 'Saving...' : 'Save Supplier'}
             </button>
-            {serverMessage && <p className={`mt-2 text-sm ${error ? 'text-red-500' : 'text-green-500'}`}>{serverMessage}</p>}
+            {serverMessage && <p className={`mt-2 text-sm ${serverMessage.includes('error') ? 'text-red-500' : 'text-green-500'}`}>{serverMessage}</p>}
           </form>
         </div>
 
         {/* Supplier List */}
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-2xl font-bold mb-4">Existing Suppliers</h2>
-          <StatusWrapper loading={loading && !suppliers.length} error={error}>
+          <StatusWrapper loading={isLoading} error={isError ? (error?.data?.message || 'Failed to fetch') : null}>
             <div className="overflow-x-auto">
               <table className="w-full table-auto">
                 <thead>
@@ -89,7 +85,7 @@ function SupplierManager() {
                   ))}
                 </tbody>
               </table>
-              {suppliers.length === 0 && <p className="text-center text-gray-500 mt-4">No suppliers found.</p>}
+              {!isLoading && suppliers.length === 0 && <p className="text-center text-gray-500 mt-4">No suppliers found.</p>}
             </div>
           </StatusWrapper>
         </div>

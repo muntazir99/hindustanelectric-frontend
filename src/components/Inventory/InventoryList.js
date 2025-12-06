@@ -29,8 +29,8 @@ function InventoryList() {
 
   const filteredInventory = searchTerm
     ? inventory.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : inventory;
 
   const groupedInventory = filteredInventory.reduce((groups, item) => {
@@ -83,7 +83,7 @@ function InventoryList() {
       // Always re-fetch the full inventory list after a successful update.
       // This is more reliable than trying to update the state manually.
       fetchInventory();
-      
+
       setEditingItem(null); // Close the modal
     } catch (err) {
       console.error("Error updating item:", err);
@@ -164,6 +164,12 @@ function InventoryList() {
                         <p><span className="font-medium">Category:</span> {item.category || "N/A"}</p>
                         <p><span className="font-medium">Barcode:</span> {item.barcode || "N/A"}</p>
                         <p><span className="font-medium">HSN Code:</span> {item.hsn_code || "N/A"}</p>
+                        {(item.historical_max_price || item.historical_min_price) && (
+                          <div className="pt-2 mt-2 border-t border-gray-100 flex justify-between text-xs text-gray-500">
+                            <span>Max: <span className="text-red-600 font-bold">{item.historical_max_price ? `₹${item.historical_max_price}` : '-'}</span></span>
+                            <span>Min: <span className="text-green-600 font-bold">{item.historical_min_price ? `₹${item.historical_min_price}` : '-'}</span></span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

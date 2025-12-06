@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { apiSlice } from '../api/apiSlice.js';
 import inventoryReducer from './inventorySlice.js';
 import suppliersReducer from './suppliersSlice.js';
 import logsReducer from './logsSlice.js';
@@ -16,5 +17,8 @@ export const store = configureStore({
     customers: customersReducer,
     reports: reportsReducer,
     payments: paymentsReducer, // Add the new reducer
+    [apiSlice.reducerPath]: apiSlice.reducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(apiSlice.middleware),
 });
