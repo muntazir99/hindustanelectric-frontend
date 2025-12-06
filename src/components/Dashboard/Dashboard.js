@@ -59,7 +59,7 @@ function Dashboard() {
       setLoading(true);
       setError(""); // Reset error on new fetch
       const [invRes, logsRes] = await Promise.all([
-        api.get("/inventory/"),
+        api.get("/inventory/?limit=1000"),
         api.get("/logs/"),
       ]);
       setInventory(invRes.data.data || []);
